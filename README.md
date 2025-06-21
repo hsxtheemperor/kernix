@@ -1,3 +1,3 @@
-# kernix
+# kernix [Custom Kernel OS]
 
-Custom Kernal OS
+Download Files from Archive Files to Setup Cross Compiler

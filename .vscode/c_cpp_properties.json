@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/src/kernel32",
+                "${workspaceFolder}/src/kernel32/drivers",
+                "${workspaceFolder}/src/kernel32",
+                "${workspaceFolder}/src/kernel32/drivers/keyboarddriver32"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-clang-x64"
+        }
+    ],
+    "version": 4
+}
