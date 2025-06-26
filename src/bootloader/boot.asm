@@ -1,90 +1,90 @@
-[BITS 16] ; 16-bit Real Mode
-[ORG 0x7c00] ; Set the origin to (starting address) 0x7c00, typical for Bootloaders
+[BITS 16]
+[ORG 0x7C00]
 
-CODE_OFFSET equ 0x8
+; Constants
+CODE_SEG        equ 0x08
+DATA_SEG        equ 0x10
+KERNEL_SEG      equ 0x1000
+KERNEL_OFFSET   equ 0x0000
+KERNEL_LBA      equ 2
+KERNEL_SECTORS  equ 8
+KERNEL_PM_ADDR  equ 0x100000
 
-DATA_OFFSET equ 0x10
-
-KERNEL32_LOAD_SEG equ 0x1000
-KERNEL32_START_ADDR equ 0x100000
 start:
-    cli ; Clear interrupts
-    mov ax, 0x00
+    cli
+    xor ax, ax
     mov ds, ax
     mov es, ax
     mov ss, ax
-    mov sp, 0x7c00
-    sti ; Enable interrupts
+    mov sp, 0x7C00
+    sti
 
-; Load Kernel32 (CH, DH, CL, DL-> HARD DISK Head-Cyclider-Sector) [TODO (Drivers Required)]
-mov bx, KERNEL32_LOAD_SEG
-mov dh, 0x00
-mov dl, 0x80
-mov ch, 0x02
-mov ch, 0x00
-mov ah, 0x02
-mov al, 8
-int 0x13
+; === Load 8 sectors from 0x1000:0000 (0x100000 linear) ===
+    mov ah, 0x02              ; BIOS: read sectors
+    mov al, KERNEL_SECTORS
+    mov ch, 0x00              ; Cylinder 0
+    mov cl, KERNEL_LBA        ; Sector 2
+    mov dh, 0x00              ; Head 0
+    mov dl, 0x80              ; Boot drive
+    mov bx, KERNEL_OFFSET     ; Offset 0
+    mov ax, KERNEL_SEG        ; Move KERNEL_SEG into ax first
+    mov es, ax                ; Set ES to 0x1000
+    int 0x13
+    jc disk_error
 
-jc disk_read_error
-
-load_PM:
+; === Enter Protected Mode ===
+load_pm:
     cli
     lgdt [gdt_descriptor]
-    mov eax, cr0 ; Control Registor 0
-    or al, 1
+    mov eax, cr0
+    or eax, 1
     mov cr0, eax
-    jmp CODE_OFFSET:PModeMain
+    jmp CODE_SEG:pm_entry
 
-disk_read_error:
-    hlt
-
-; GDT Implementation
+; === GDT Setup ===
 gdt_start:
-    dd 0x0
-    dd 0x0
+    dq 0x0000000000000000
 
-    ; Code segment descriptor
-    dw 0xffff       ; Limit
-    dw 0x0000       ; Base
-    db 0x00         ; Base
-    db 10011010b    ; Access byte [(pres, priv, type) , (ECRA)]
-    db 11001111b    ; Flags [(GDL(AVL))]
-    db 0x00         ; Base
+    ; Code Segment
+    dw 0xFFFF
+    dw 0x0000
+    db 0x00
+    db 10011010b
+    db 11001111b
+    db 0x00
 
-    ; Data segment descriptor
-    dw 0xffff       ; Limit
-    dw 0x0000       ; Base
-    db 0x00         ; Base
-    db 10010010b    ; Access byte [(pres, priv, type) , (E(ED)WA)]
-    db 11001111b    ; Flags [(GDL<AVL>)]
-    db 0x00         ; Base
+    ; Data Segment
+    dw 0xFFFF
+    dw 0x0000
+    db 0x00
+    db 10010010b
+    db 11001111b
+    db 0x00
 
 gdt_end:
 
 gdt_descriptor:
-    dw gdt_end - gdt_start - 1 ; Size of GDT -1
-    dd gdt_start ; Base/Location of GDT
+    dw gdt_end - gdt_start - 1
+    dd gdt_start
 
-[BITS 32] ; 32-bit Kernel Mode
-
-; Protected Mode Setup
-PModeMain:
-    mov ax, DATA_OFFSET
+; === 32-bit Protected Mode Entry ===
+[BITS 32]
+pm_entry:
+    mov ax, DATA_SEG
     mov ds, ax
     mov es, ax
     mov fs, ax
-    mov ss, ax
     mov gs, ax
-    mov ebp, 0x9c00 ; 32-bit Stack Pointer to not overflow BootLoader
-    mov esp, ebp
+    mov ss, ax
+    mov esp, 0x9C00
 
-    in al, 0x92
-    or al, 2
-    out 0x92, al
+    jmp KERNEL_PM_ADDR
 
-    jmp CODE_OFFSET:KERNEL32_START_ADDR
+; === Disk Error ===
+disk_error:
+    hlt
+    jmp $
 
+; === Padding ===
 times 510 - ($ - $$) db 0
-
 dw 0xAA55

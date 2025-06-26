@@ -7,7 +7,7 @@
                 "${workspaceFolder}/src/kernel32",
                 "${workspaceFolder}/src/kernel32/drivers",
                 "${workspaceFolder}/src/kernel32",
-                "${workspaceFolder}/src/kernel32/drivers/keyboarddriver32"
+                "${workspaceFolder}/src/kernel32/arch"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

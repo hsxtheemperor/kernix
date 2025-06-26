@@ -1,10 +1,13 @@
-#include "videodriver32.c" // Video Driver
+#include <videodriver32.h> // Video Driver
 #include <types.h>
 #include <mod_flags.h>
+#include <nav_keys.h>
 uint8_t mod_flags = 0;
 extern void vga_print(char); // prints one character
+extern void vga_nav(uint8_t); // navigation key
 
-// Scandcode Definition [PRESS] [RELEASE -> PRESS & 0x80]
+// Scandcode Definition [PRESS] [RELEASE -> PRESS & 0x80] 
+// SPECIAL KEYS
 #define CTRL_KEY 0x1D
 #define RIGHT_SHIFT_KEY 0x36
 #define LEFT_SHIFT_KEY 0x2A
@@ -14,6 +17,25 @@ extern void vga_print(char); // prints one character
 #define EXTEND_KEY 0xE0
 #define DEL_KEY 0x53
 #define INSERT_KEY 0x52
+// ARROW / NAV KEYS
+#define UP_ARROW 0x48
+#define DOWN_ARROW 0x50
+#define LEFT_ARROW 0x4B
+#define RIGHT_ARROW 0x4D
+#define HOME_KEY 0x47
+#define END_KEY 0x4F
+#define PAGE_UP 0x49
+#define PAGE_DOWN 0x51
+
+static inline uint8_t inb(uint16_t port) {
+    uint8_t ret;
+    __asm__ volatile ("inb %1, %0" : "=a"(ret) : "Nd"(port));
+    return ret;
+}
+
+static inline void outb(uint16_t port, uint8_t val) {
+    __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
+}
 
  // Key Map [Binary Signals -> ASCII Keys] for example: [0x1E -> 'a'] Map
 const char scancode_map[128] = { // Base Scancode Map
@@ -67,6 +89,21 @@ char translate_ascii(char base, uint8_t flags) {
     return base;
 }
 
+char translate_navigation(char dirn){
+     switch(dirn){
+        case UP_ARROW:
+            return NAV_UP;
+        case DOWN_ARROW:
+            return NAV_DOWN;
+        case LEFT_ARROW:
+            return NAV_LEFT;
+        case RIGHT_ARROW:
+            return NAV_RIGHT;
+        default:
+            return 0;
+    }
+}
+
 void translate_numpad(){}
 
 void keyboard_handler(){
@@ -91,6 +128,31 @@ void keyboard_handler(){
 
         case DEL_KEY: // Del
             if (!released) vga_print(KEY_DEL);
+            break;
+
+        case UP_ARROW:
+            if (!released) vga_nav(NAV_UP);
+            break;
+        case DOWN_ARROW:
+            if (!released) vga_nav(NAV_DOWN);
+            break;
+        case LEFT_ARROW:
+            if (!released) vga_nav(NAV_LEFT);
+            break;
+        case RIGHT_ARROW:
+            if (!released) vga_nav(NAV_RIGHT);
+            break;
+        case HOME_KEY:
+            if (!released) vga_nav(NAV_RIGHT);
+            break;
+        case END_KEY:
+            if (!released) vga_nav(NAV_RIGHT);
+            break;
+        case PAGE_UP:
+            if (!released) vga_nav(NAV_RIGHT);
+            break;
+        case PAGE_DOWN:
+            if (!released) vga_nav(NAV_RIGHT);
             break;
 
         // more extended keys
@@ -145,7 +207,6 @@ void keyboard_handler(){
             }
             break;
     }
-    
     
     outb(0x20, 0x20); // End Of Interrupt (EOI) to Programmable Interrupt Controller (PIC)
 }

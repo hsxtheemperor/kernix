@@ -1,8 +1,11 @@
+#include <types.h>
+#include <nav_keys.h>
 #define VGA_WIDTH 80 // VGA Monitor Width
 #define VGA_HEIGHT 25 // VGA Monitor Height
 #define VGA_ADDRESS 0xB8000 // VGA Memory Address
 #define COLOR_WHITE_ON_BLACK 0x0F // Black BG -> 0x0, White FG -> 0xF => [0x0F] or [0x{FG}{BG}]
 #define KEY_DEL 0x7F // Delete Key ASCII
+
 uint16_t*const video_memory = (unsigned short*) VGA_ADDRESS; // Stores ASCII Characters to VGA Memory
 
 unsigned cursor_row = 0; // Row Initial
@@ -54,7 +57,21 @@ void vga_print(char ch){
     }
 }
 
-void vga_cursor(dirn){
-    
+void vga_nav(uint8_t dirn){
+    switch(dirn){
+        case NAV_UP:
+            if(cursor_row > 0) cursor_row--;
+            break;
+        case NAV_DOWN:
+            if(cursor_row < VGA_HEIGHT) cursor_row++;
+            break;
+        case NAV_LEFT:
+            if(cursor_col < VGA_WIDTH) cursor_col++;
+            break;
+        case NAV_RIGHT:
+            if(cursor_col > 0) cursor_col--;
+            break;
+        default:
+            break;
+    }
 }
-
