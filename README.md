@@ -4,7 +4,7 @@
 
 Kernix is a small 16-bit x86 boot-sector experiment written in NASM Assembly. Its current boot sector initializes real-mode segments and a stack, prints `Hello World!` through the BIOS video teletype service (`INT 10h`), then halts. The source pads the image to a boot-sector-sized 512 bytes and adds the `0xAA55` signature.
 
-The repository also contains notes about BIOS functions, bootloading, and real mode. Development is currently dormant.
+The repository also contains notes about BIOS functions, bootloading, and real mode.
 
 ## Build
 
